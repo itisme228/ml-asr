@@ -1,18 +1,18 @@
 import os
+import shutil
 import uuid
 import torch
-import torchaudio
 import torchaudio.transforms as T
 import soundfile as sf
 import time
 from flask import Flask, render_template, request, jsonify
 from torchaudio.utils import _download_asset
-from src.model import BSRNN
+from models.SGMSE import BSRNN
 
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='static')
 os.makedirs("static/audio", exist_ok=True)
 
 # --- Конфигурация ---
@@ -52,6 +52,22 @@ sr_r = rir_samplerate
 RIR_WAVEFORM = T.Resample(sr_r, SR)(RIR_WAVEFORM.mean(dim=0, keepdim=True))
 RIR_WAVEFORM = RIR_WAVEFORM[:, :int(SR * 0.3)].to(DEVICE)
 RIR_WAVEFORM = RIR_WAVEFORM / torch.norm(RIR_WAVEFORM, p=2)
+
+def clear_audio_folder():
+    """Удаляет все файлы из папки static/audio"""
+    folder = 'static/audio'
+    print(f"\n[Cleanup] Очистка временных файлов в {folder}...")
+    if os.path.exists(folder):
+        for filename in os.listdir(folder):
+            file_path = os.path.join(folder, filename)
+            try:
+                if os.path.isfile(file_path) or os.path.islink(file_path):
+                    os.unlink(file_path)
+                elif os.path.isdir(file_path):
+                    shutil.rmtree(file_path)
+            except Exception as e:
+                print(f'Не удалось удалить {file_path}. Причина: {e}')
+    print("[Cleanup] Готово. Приложение закрыто.")
 
 def get_snr_scale(signal, noise, snr_db=5):
     sig_power = signal.norm(p=2)**2 / (signal.numel() + 1e-8)
@@ -158,15 +174,15 @@ def process_audio():
         denoised_tensor = normalize(denoised_tensor)
 
         paths = {
-            'clean': f"static/audio/{session_id}_clean.wav",
-            'noisy': f"static/audio/{session_id}_noisy_{noise_type}.wav",
-            'denoised': f"static/audio/{session_id}_denoised.wav"
-        }
+        'clean': f"/static/audio/{session_id}_clean.wav",
+        'noisy': f"/static/audio/{session_id}_noisy_{noise_type}.wav",
+        'denoised': f"/static/audio/{session_id}_denoised.wav"
+        }   
 
         # Сохраняем (soundfile ожидает [samples, channels] для numpy)
-        sf.write(paths['clean'], clean_tensor.squeeze().cpu().numpy(), SR)
-        sf.write(paths['noisy'], noisy_tensor.squeeze().cpu().numpy(), SR)
-        sf.write(paths['denoised'], denoised_tensor.squeeze().cpu().numpy(), SR)
+        sf.write(paths['clean'].lstrip('/'), clean_tensor.squeeze().cpu().numpy(), SR)
+        sf.write(paths['noisy'].lstrip('/'), noisy_tensor.squeeze().cpu().numpy(), SR)
+        sf.write(paths['denoised'].lstrip('/'), denoised_tensor.squeeze().cpu().numpy(), SR)
 
         end_time = time.time()
         print(f"Обработка завершена за {end_time - start_time:.2f} сек.")
@@ -178,4 +194,6 @@ def process_audio():
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
+    import atexit
+    atexit.register(clear_audio_folder)
     app.run(debug=True, port=5000)

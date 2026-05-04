@@ -21,6 +21,20 @@
     <h2>Speech Enhancement (BSRNN)</h2>
     
     <div class="controls">
+        <label for="modelSelect">Выберите модель:</label>
+        <select id="modelSelect">
+            <!-- Значения value теперь строго соответствуют ключам в Flask-бэкенде -->
+            <option value="BSRNN">BSRNN</option>
+            <option value="FRCRN">FRCRN</option>
+            <option value="DCCRN">DCCRN (лучшая)</option>
+            <option value="DeepFilterNet2">DeepFilterNet 2</option>
+            <option value="FullSubNet">Full Sub Net</option>
+            <option value="metricgan">MetricGAN+</option>
+            <option value="PHASEN">PHASEN</option>
+            <option value="DCUNET">DCUNET</option>
+            <option value="ScoreModelDCUNet">SGMSE</option>
+        </select>
+        <br><br>
         <label for="noiseSelect">Выберите тип шума:</label>
         <select id="noiseSelect">
             <option value="babble">Babble (Голоса на фоне)</option>
@@ -55,6 +69,7 @@
         const noiseSelect = document.getElementById('noiseSelect');
         const statusText = document.getElementById('statusText');
         const resultsDiv = document.getElementById('results');
+        const modelSelect = document.getElementById('modelSelect');
 
         recordBtn.onclick = async () => {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -86,6 +101,7 @@
             const formData = new FormData();
             formData.append('audio', audioBlob, 'recording.webm');
             formData.append('noise_type', noiseSelect.value);
+            formData.append('model_type', modelSelect.value);
 
             try {
                 const response = await fetch('/process', {

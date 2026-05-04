@@ -7,6 +7,7 @@ venv/
 .env
 ru_train_data/
 *.tar
+*.tsv
 
 # C extensions
 *.so
