@@ -8,6 +8,8 @@ sys.path.append(parent_dir)
 
 import math
 import uuid
+import atexit
+import shutil
 import gc
 import torch
 import torchaudio.transforms as T
@@ -48,6 +50,20 @@ SGMSE_N_STEPS = 30
 
 current_model_name = None
 current_model = None
+
+def cleanup_static_files():
+    folder = 'static/audio'
+    print(f"[*] Завершение работы: очистка папки {folder}...")
+    if os.path.exists(folder):
+        for filename in os.listdir(folder):
+            file_path = os.path.join(folder, filename)
+            try:
+                if os.path.isfile(file_path) or os.path.islink(file_path):
+                    os.unlink(file_path) # Удаляем файл или ссылку
+                elif os.path.isdir(file_path):
+                    shutil.rmtree(file_path) # Удаляем подпапку, если она есть
+            except Exception as e:
+                print(f'[-] Не удалось удалить {file_path}. Причина: {e}')
 
 def compress_stft(stft, alpha=SGMSE_ALPHA):
     mag = torch.abs(stft)
@@ -336,5 +352,8 @@ def process_audio():
         print(f"ОШИБКА: {e}")
         return jsonify({'error': str(e)}), 500
 
+atexit.register(cleanup_static_files)
+
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
+    
