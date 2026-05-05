@@ -66,10 +66,16 @@ SGMSE — Диффузионная модель на основе стохаст
     source venv/bin/activate  # Для Windows: venv\Scripts\activate
     pip install -r requirements.txt
 
-2. Загрузка весов
+2. Загрузка данных
+
+curl -L "https://huggingface.co/datasets/fsicoli/common_voice_19_0/resolve/main/audio/ru/train/ru_train_0.tar" -o data/raw/ru_train_0.tar
+
+3. Обучение любой модели
+
+запустите любой .ipynb файл модели из папки code
 
 Убедитесь, что файлы весов (например, bsrnn_weights.pth, dccrn_weights.pth и т.д.) находятся в папке models/.
-3. Запуск веб-сервиса
+4. Запуск веб-сервиса
 
     python app.py
 

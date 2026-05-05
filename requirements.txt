@@ -13,3 +13,5 @@ tqdm
 ipython
 requests
 pydub
+torchcodec
+ipykernel
