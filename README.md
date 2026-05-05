@@ -75,7 +75,7 @@ curl -L "https://huggingface.co/datasets/fsicoli/common_voice_19_0/resolve/main/
 Убедитесь, что файлы весов (например, bsrnn_weights.pth, dccrn_weights.pth и т.д.) находятся в папке models/.
 4. Запуск веб-сервиса
 
-    python app.py
+    python service/app.py
 
 Приложение будет доступно по адресу: http://127.0.0.1:5000
 ## Использование
